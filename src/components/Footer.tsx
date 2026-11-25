@@ -25,9 +25,9 @@ export default function Footer() {
         <div className="footer-contact">
           <h3>Contact</h3>
           <p>
-            Your address
+            No:C12 Ambattur Estate,west Mogappair, chennai-600037
             <br />
-            Phone:1234567890
+            Phone:80122 38604
             <br />
             vrinteriorsvitz@gmail.com
           </p>

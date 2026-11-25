@@ -1,0 +1,591 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+
+type ProjectType = "home" | "office" | "commercial";
+type FinishLevel = "essential" | "refined" | "luxury";
+
+const projectTypes: {
+  value: ProjectType;
+  label: string;
+  description: string;
+  icon: string;
+}[] = [
+  {
+    value: "home",
+    label: "Home",
+    description: "Apartments & houses",
+    icon: "01",
+  },
+  {
+    value: "office",
+    label: "Office",
+    description: "Workspaces & meeting rooms",
+    icon: "02",
+  },
+  {
+    value: "commercial",
+    label: "Commercial",
+    description: "Fit-outs & other business spaces",
+    icon: "03",
+  },
+];
+
+const finishLevels: {
+  value: FinishLevel;
+  label: string;
+  description: string;
+  multiplier: number;
+}[] = [
+  {
+    value: "essential",
+    label: "Essential",
+    description: "Practical finishes and functional planning",
+    multiplier: 0.8,
+  },
+  {
+    value: "refined",
+    label: "Refined",
+    description: "Balanced materials, lighting and detailing",
+    multiplier: 1,
+  },
+  {
+    value: "luxury",
+    label: "Luxury",
+    description: "Premium materials and bespoke detailing",
+    multiplier: 1.4,
+  },
+];
+
+// Illustrative planning rates only. Replace these with your actual rates.
+// Illustrative planning rates only. Replace these with your actual rates.
+const rates: Record<ProjectType, { min: number; max: number }> = {
+  home: { min: 1600, max: 2800 },
+  office: { min: 1400, max: 2400 },
+  commercial: { min: 1500, max: 2700 },
+};
+
+const serviceOptions = [
+  {
+    value: "design",
+    label: "Interior design & space planning",
+    description: "Layouts, design direction and material selection",
+    factor: 0.12,
+  },
+  {
+    value: "fitout",
+    label: "Civil work & interior fit-out",
+    description: "Finishes, partitions and agreed installation work",
+    factor: 0.48,
+  },
+  {
+    value: "furniture",
+    label: "Furniture & storage",
+    description: "Workstations, seating and built-in storage",
+    factor: 0.2,
+  },
+  {
+    value: "lighting",
+    label: "Lighting & electrical",
+    description: "Lighting fixtures and agreed electrical scope",
+    factor: 0.12,
+  },
+];
+
+const formatINR = (amount: number) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(amount);
+
+export default function EstimatePage() {
+  const [projectType, setProjectType] = useState<ProjectType>("home");
+  const [area, setArea] = useState("1000");
+  const [finish, setFinish] = useState<FinishLevel>("refined");
+  const [selectedServices, setSelectedServices] = useState<string[]>([
+    "design",
+    "fitout",
+    "furniture",
+    "lighting",
+  ]);
+  const [location, setLocation] = useState("");
+  const [timeline, setTimeline] = useState("1-3 months");
+  const [showEstimate, setShowEstimate] = useState(false);
+
+  const areaValue = Math.max(0, Number(area) || 0);
+  const finishMultiplier =
+    finishLevels.find((item) => item.value === finish)?.multiplier ?? 1;
+
+  const estimate = useMemo(() => {
+    const base = rates[projectType];
+    const selectedFactor = serviceOptions
+      .filter((service) => selectedServices.includes(service.value))
+      .reduce((sum, service) => sum + service.factor, 0);
+
+    // The selected scope adjusts the illustrative base rate.
+    // At least a small planning allowance remains when no services are selected.
+    const scopeFactor = Math.max(0.15, selectedFactor);
+
+    return {
+      min: areaValue * base.min * finishMultiplier * scopeFactor,
+      max: areaValue * base.max * finishMultiplier * scopeFactor,
+    };
+  }, [projectType, areaValue, finishMultiplier, selectedServices]);
+
+  const toggleService = (value: string) => {
+    setSelectedServices((current) =>
+      current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value],
+    );
+  };
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setShowEstimate(true);
+  };
+
+  const projectLabel =
+    projectTypes.find((item) => item.value === projectType)?.label ?? "Home";
+
+  const finishLabel =
+    finishLevels.find((item) => item.value === finish)?.label ?? "Refined";
+
+  const enquiryMessage = [
+    "Hello VR Interiors, I would like to discuss a commercial interior project.",
+    "",
+    `Project type: ${projectLabel}`,
+    `Approximate area: ${areaValue.toLocaleString("en-IN")} sq. ft.`,
+    `Finish preference: ${finishLabel}`,
+    `Location: ${location || "Not specified"}`,
+    `Preferred timeline: ${timeline}`,
+    `Required services: ${
+      serviceOptions
+        .filter((service) => selectedServices.includes(service.value))
+        .map((service) => service.label)
+        .join(", ") || "To be discussed"
+    }`,
+    `Indicative planning range: ${formatINR(estimate.min)} - ${formatINR(estimate.max)}`,
+    "",
+    "Please contact me to discuss the project scope and quotation.",
+  ].join("\n");
+
+  return (
+    <>
+      <Header />
+
+      <main className="estimate-page">
+        {/* HERO */}
+        <section className="estimate-hero">
+          <div className="container estimate-hero-grid">
+            <div className="estimate-hero-copy">
+              <span className="eyebrow">YOUR PROJECT STARTS HERE</span>
+
+              <h1>
+                Great spaces begin
+                <br />
+                with <span>a clear plan.</span>
+              </h1>
+
+              <p>
+                Tell us a little about your commercial space. Explore an initial
+                budget range and discover the right starting point for your
+                project.
+              </p>
+
+              <div className="estimate-hero-points">
+                <span>
+                  <b>01</b> Define your space
+                </span>
+                <span>
+                  <b>02</b> Choose your scope
+                </span>
+                <span>
+                  <b>03</b> Explore your budget
+                </span>
+              </div>
+            </div>
+
+            <div className="estimate-hero-image">
+              <img
+                src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1400&q=85"
+                alt="Warm contemporary commercial office interior"
+                fetchPriority="high"
+              />
+
+              <div className="estimate-image-caption">
+                <span className="estimate-caption-mark">VR.</span>
+                <div>
+                  <strong>Designed around your vision.</strong>
+                  <span>Commercial interiors, thoughtfully planned.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ESTIMATOR */}
+        <section className="estimate-workspace section-padding">
+          <div className="container">
+            <div className="estimate-intro">
+              <span className="eyebrow">PROJECT ESTIMATOR</span>
+              <h2 className="section-heading">
+                Let&apos;s shape your estimate.
+              </h2>
+              <p>
+                Adjust the options below to create an initial planning range for
+                your space.
+              </p>
+            </div>
+
+            <div className="estimate-layout">
+              <form className="estimate-form" onSubmit={handleSubmit}>
+                {/* STEP 1 */}
+                <div className="estimate-step">
+                  <div className="estimate-step-heading">
+                    <span className="estimate-step-number">01</span>
+                    <div>
+                      <h3>What kind of space are you creating?</h3>
+                      <p>Choose the option that best describes your project.</p>
+                    </div>
+                  </div>
+
+                  <div className="project-type-grid">
+                    {projectTypes.map((project) => (
+                      <button
+                        type="button"
+                        key={project.value}
+                        className={`project-type-card ${
+                          projectType === project.value ? "is-selected" : ""
+                        }`}
+                        onClick={() => {
+                          setProjectType(project.value);
+                          setShowEstimate(false);
+                        }}
+                        aria-pressed={projectType === project.value}
+                      >
+                        <span className="project-type-number">
+                          {project.icon}
+                        </span>
+                        <strong>{project.label}</strong>
+                        <span className="project-type-description">
+                          {project.description}
+                        </span>
+                        <span className="project-type-check">
+                          {projectType === project.value ? "✓" : "+"}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* STEP 2 */}
+                {/*<div className="estimate-step">
+                  <div className="estimate-step-heading">
+                    <span className="estimate-step-number">02</span>
+                    <div>
+                      <h3>How large is your space?</h3>
+                      <p>Enter the approximate floor area in square feet.</p>
+                    </div>
+                  </div>
+
+                  <label className="estimate-label" htmlFor="project-area">
+                    Approximate area
+                  </label>
+
+                  <div className="area-input-wrap">
+                    <input
+                      id="project-area"
+                      type="number"
+                      min="100"
+                      max="100000"
+                      step="50"
+                      required
+                      value={area}
+                      onChange={(event) => {
+                        setArea(event.target.value);
+                        setShowEstimate(false);
+                      }}
+                      placeholder="Enter area"
+                    />
+                    <span>sq. ft.</span>
+                  </div>
+
+                  <div className="area-shortcuts">
+                    {[500, 1000, 2000, 5000].map((size) => (
+                      <button
+                        type="button"
+                        key={size}
+                        className={Number(area) === size ? "active" : ""}
+                        onClick={() => {
+                          setArea(String(size));
+                          setShowEstimate(false);
+                        }}
+                      >
+                        {size.toLocaleString("en-IN")} sq. ft.
+                      </button>
+                    ))}
+                  </div>
+                </div>*/}
+
+                {/* STEP 3 */}
+                {/*<div className="estimate-step">
+                  <div className="estimate-step-heading">
+                    <span className="estimate-step-number">03</span>
+                    <div>
+                      <h3>Choose your finish preference.</h3>
+                      <p>
+                        Your material and detailing choices influence the
+                        budget.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="finish-grid">
+                    {finishLevels.map((level) => (
+                      <button
+                        type="button"
+                        key={level.value}
+                        className={`finish-card ${
+                          finish === level.value ? "is-selected" : ""
+                        }`}
+                        onClick={() => {
+                          setFinish(level.value);
+                          setShowEstimate(false);
+                        }}
+                        aria-pressed={finish === level.value}
+                      >
+                        <span
+                          className={`finish-swatch swatch-${level.value}`}
+                        />
+                        <strong>{level.label}</strong>
+                        <span>{level.description}</span>
+                        <span className="finish-radio">
+                          {finish === level.value ? "✓" : ""}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>*/}
+
+                {/* STEP 4 */}
+                <div className="estimate-step">
+                  <div className="estimate-step-heading">
+                    <span className="estimate-step-number">04</span>
+                    <div>
+                      <h3>What would you like us to include?</h3>
+                      <p>Select the services you may need.</p>
+                    </div>
+                  </div>
+
+                  <div className="estimate-services-list">
+                    {serviceOptions.map((service) => {
+                      const checked = selectedServices.includes(service.value);
+
+                      return (
+                        <label
+                          className={`estimate-service-option ${
+                            checked ? "is-checked" : ""
+                          }`}
+                          key={service.value}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => {
+                              toggleService(service.value);
+                              setShowEstimate(false);
+                            }}
+                          />
+                          <span className="custom-checkbox">
+                            {checked ? "✓" : ""}
+                          </span>
+                          <span className="estimate-service-copy">
+                            <strong>{service.label}</strong>
+                            <span>{service.description}</span>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* STEP 5 */}
+                <div className="estimate-step">
+                  <div className="estimate-step-heading">
+                    <span className="estimate-step-number">05</span>
+                    <div>
+                      <h3>Tell us a little more.</h3>
+                      <p>
+                        These details help prepare for a useful conversation.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="estimate-extra-fields">
+                    <div className="estimate-field">
+                      <label htmlFor="project-location">Project location</label>
+                      <input
+                        id="project-location"
+                        type="text"
+                        value={location}
+                        onChange={(event) => setLocation(event.target.value)}
+                        placeholder="City or area"
+                        maxLength={100}
+                      />
+                    </div>
+
+                    <div className="estimate-field">
+                      <label htmlFor="project-timeline">
+                        Preferred timeline
+                      </label>
+                      <select
+                        id="project-timeline"
+                        value={timeline}
+                        onChange={(event) => setTimeline(event.target.value)}
+                      >
+                        <option value="As soon as possible">
+                          As soon as possible
+                        </option>
+                        <option value="1-3 months">Within 1–3 months</option>
+                        <option value="3-6 months">Within 3–6 months</option>
+                        <option value="6+ months">6+ months</option>
+                        <option value="Flexible">Flexible</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="button button-dark estimate-submit"
+                  disabled={areaValue < 100 || areaValue > 100000}
+                >
+                  Calculate My Estimate <span>↗</span>
+                </button>
+
+                <p className="estimate-form-note">
+                  This tool provides an initial planning range, not a binding
+                  quotation or a guarantee of final project cost.
+                </p>
+              </form>
+
+              {/* SUMMARY PANEL */}
+              <aside className="estimate-summary">
+                <div className="estimate-summary-top">
+                  <span className="eyebrow eyebrow-light">
+                    YOUR PROJECT OVERVIEW
+                  </span>
+                  <div className="estimate-summary-logo">VR.</div>
+
+                  <h3>
+                    A space designed
+                    <br />
+                    around you.
+                  </h3>
+
+                  <p>
+                    Your selections help us understand the direction of your
+                    project.
+                  </p>
+                </div>
+
+                <div className="estimate-summary-body">
+                  <div className="summary-detail">
+                    <span>Project type</span>
+                    <strong>{projectLabel}</strong>
+                  </div>
+                  <div className="summary-detail">
+                    <span>Approximate area</span>
+                    <strong>{areaValue.toLocaleString("en-IN")} sq. ft.</strong>
+                  </div>
+                  <div className="summary-detail">
+                    <span>Finish preference</span>
+                    <strong>{finishLabel}</strong>
+                  </div>
+                  <div className="summary-detail">
+                    <span>Services selected</span>
+                    <strong>{selectedServices.length} of 4</strong>
+                  </div>
+
+                  <div className="summary-divider" />
+
+                  {showEstimate ? (
+                    <div className="estimate-result" aria-live="polite">
+                      <span className="estimate-result-label">
+                        INDICATIVE BUDGET RANGE
+                      </span>
+                      <div className="estimate-result-amount">
+                        {formatINR(estimate.min)}
+                      </div>
+                      <div className="estimate-result-to">to</div>
+                      <div className="estimate-result-amount">
+                        {formatINR(estimate.max)}
+                      </div>
+                      <p>
+                        A preliminary planning estimate based on your current
+                        selections.
+                      </p>
+
+                      <a
+                        className="button button-light estimate-contact-button"
+                        href={`/contact?message=${encodeURIComponent(enquiryMessage)}`}
+                      >
+                        Discuss This Estimate <span>↗</span>
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="estimate-placeholder">
+                      <span className="estimate-placeholder-icon">↗</span>
+                      <h4>Your estimate starts here.</h4>
+                      <p>
+                        Complete the details and select Calculate My Estimate to
+                        view your indicative planning range.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="estimate-summary-footer">
+                  <span className="summary-footer-dot" />
+                  <p>
+                    Every project is different. Your final quotation will depend
+                    on the agreed scope, site conditions, specifications and
+                    taxes.
+                  </p>
+                </div>
+              </aside>
+            </div>
+          </div>
+        </section>
+
+        {/* BOTTOM CTA */}
+        <section className="estimate-bottom-cta">
+          <div className="container estimate-bottom-inner">
+            <div>
+              <span className="eyebrow">LET&apos;S MAKE IT PERSONAL</span>
+              <h2>
+                Your vision deserves
+                <br />
+                <span>a thoughtful plan.</span>
+              </h2>
+              <p>
+                Speak with us about your space, priorities and the right next
+                step for your business.
+              </p>
+            </div>
+
+            <a className="button button-dark" href="/contact">
+              Talk to VR Interiors <span>↗</span>
+            </a>
+          </div>
+        </section>
+      </main>
+
+      <Footer />
+    </>
+  );
+}
